@@ -17,15 +17,15 @@ from SearchStrategies import SearchStrategies
 ## http://www.blog.pythonlibrary.org/2008/05/18/a-wxpython-sizers-tutorial/
 
 # MAP_IMG_PATH = "Mapa.jpg"
-MAP_IMG_PATH = "Mapa.png"
+MAP_IMG_PATH = "./img/Mapa.png"
 # BUTTON_IMG_PATH = "go.jpg"
-BUTTON_IMG_PATH = "go_button4.png"
+BUTTON_IMG_PATH = "./img/go_button4.png"
 
-CITY_INFO_PATH = 'MetroLyon.txt'
-MA_PATH = 'MatriuAdjacencia.txt'
+CITY_INFO_PATH = './data/MetroLyon.txt'
+MA_PATH = './data/MatriuAdjacencia.txt'
 
-TROLEI_BUS_MA_PATH = 'TroleiBusMA.txt'
-TROLEI_BUS_INFO_PATH = 'TroleiBusTest.txt'
+TROLEI_BUS_MA_PATH = './data/TroleiBusMA.txt'
+TROLEI_BUS_INFO_PATH = './data/TroleiBusTest.txt'
 
 WALK_MULTIPLIER = 10
 
