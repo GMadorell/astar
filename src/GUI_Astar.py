@@ -16,26 +16,25 @@ from SearchStrategies import SearchStrategies
 ## http://www.java2s.com/Tutorial/Python/0380__wxPython/Catalog0380__wxPython.htm
 ## http://www.blog.pythonlibrary.org/2008/05/18/a-wxpython-sizers-tutorial/
 
-# MAP_IMG_PATH = "Mapa.jpg"
 MAP_IMG_PATH = "./img/Mapa.png"
-# BUTTON_IMG_PATH = "go.jpg"
 BUTTON_IMG_PATH = "./img/go_button4.png"
 
-CITY_INFO_PATH = './data/MetroLyon.txt'
+CITY_INFO_PATH = './data/metroLyon.txt'
 MA_PATH = './data/MatriuAdjacencia.txt'
 
-TROLEI_BUS_MA_PATH = './data/TroleiBusMA.txt'
-TROLEI_BUS_INFO_PATH = './data/TroleiBusTest.txt'
+TROLEI_BUS_MA_PATH = './data/trolleibusMA.txt'
+TROLEI_BUS_INFO_PATH = './data/trolleibusTest.txt'
 
 WALK_MULTIPLIER = 10
 
 # Frame = window 
-class GuiAstar(wx.Frame): #frame es class dintre de wx que usarem en casi totes les classes (permet fer frames)
+class GuiAstar(wx.Frame): 
     def __init__(self, parent, id):
         self.size = (720,640)
         wx.Frame.__init__(self, parent, id, 'Astar', size=self.size)
         self.SetMinSize(self.size)
-        # Creem un panel
+
+        # Create a base panel
         self.panel = wx.Panel(self)
 
         # Create sizers
@@ -51,21 +50,21 @@ class GuiAstar(wx.Frame): #frame es class dintre de wx que usarem en casi totes 
         self.map_sizer.Add(self.static_bitmap_map, proportion=0, flag = wx.ALL|wx.ALIGN_CENTER, border = 3)
 
         # Create checkboxes for the options
-        self.walking_cb = wx.CheckBox(self.panel, -1, "Caminant")
-        self.metro_cb = wx.CheckBox(self.panel, -1, "Metro")
-        self.troleibus_cb = wx.CheckBox(self.panel, -1, "Troleibus")
+        self.walking_cb = wx.CheckBox(self.panel, -1, "Walking")
+        self.subway_cb = wx.CheckBox(self.panel, -1, "Subway")
+        self.trolleybus_cb = wx.CheckBox(self.panel, -1, "Trolleybus")
 
         # Create some radio buttons for letting the user select in which way to optimize the pathfinding.
-        self.stations_rb = wx.RadioButton(self.panel, -1, "Minimitza parades", style = wx.RB_GROUP)
-        self.transbords_rb = wx.RadioButton(self.panel, -1, "Minimitza transbords")
-        self.costs_rb = wx.RadioButton(self.panel, -1, "Minimitza cost")
+        self.stations_rb = wx.RadioButton(self.panel, -1, "Minimize stops", style = wx.RB_GROUP)
+        self.transfers_rb = wx.RadioButton(self.panel, -1, "Minimize transfers")
+        self.costs_rb = wx.RadioButton(self.panel, -1, "Minimize cost")
 
         # Add the checkboxes and the radio buttons to the respective sizer
         self.options_grid_sizer.Add(self.walking_cb)
         self.options_grid_sizer.Add(self.stations_rb)
-        self.options_grid_sizer.Add(self.metro_cb)
-        self.options_grid_sizer.Add(self.transbords_rb)
-        self.options_grid_sizer.Add(self.troleibus_cb)
+        self.options_grid_sizer.Add(self.subway_cb)
+        self.options_grid_sizer.Add(self.transfers_rb)
+        self.options_grid_sizer.Add(self.trolleybus_cb)
         self.options_grid_sizer.Add(self.costs_rb)
 
         # Add the grid sizer of the customizable options to it's father sizer
@@ -77,8 +76,8 @@ class GuiAstar(wx.Frame): #frame es class dintre de wx que usarem en casi totes 
         self.list_origin = self.fetchStations()
         self.choice_destiny = wx.Choice(self.panel, -1, choices = self.list_destiny)
         self.choice_origin = wx.Choice(self.panel, -1, choices = self.list_origin)
-        self.text_origin = wx.StaticText(self.panel, -1, "Origen: ")
-        self.text_destiny = wx.StaticText(self.panel, -1, "Destí: ")
+        self.text_origin = wx.StaticText(self.panel, -1, "Origin: ")
+        self.text_destiny = wx.StaticText(self.panel, -1, "Destiny: ")
 
         # Add the choices and their text to their sizer
         self.options_sizer.Add(self.text_origin, proportion=0, flag=wx.ALL|wx.ALIGN_LEFT, border = 3)        
@@ -87,7 +86,6 @@ class GuiAstar(wx.Frame): #frame es class dintre de wx que usarem en casi totes 
         self.options_sizer.Add(self.choice_destiny, proportion=0, flag=wx.ALL|wx.ALIGN_LEFT, border = 3)
 
         # Create a button so the user can run the algorithm
-        # self.button_img = wx.Image(BUTTON_IMG_PATH, wx.BITMAP_TYPE_ANY).ConvertToBitmap()
         self.button_img = wx.Bitmap(BUTTON_IMG_PATH, wx.BITMAP_TYPE_ANY)
         width, height = self.button_img.GetWidth(), self.button_img.GetHeight()
         self.go_button = wx.BitmapButton(self.panel, -1, self.button_img, (width, height))
@@ -123,7 +121,6 @@ class GuiAstar(wx.Frame): #frame es class dintre de wx que usarem en casi totes 
         Will call the function to run the algorithm according to the selected
         options.
         """
-        print "I'm at onButtonClick"
         self.run()       
 
     def run(self):
@@ -134,53 +131,53 @@ class GuiAstar(wx.Frame): #frame es class dintre de wx que usarem en casi totes 
         """
         # Get the state of the check boxes
         walking_selected = self.walking_cb.GetValue()
-        metro_selected = self.metro_cb.GetValue()
-        troleibus_selected = self.troleibus_cb.GetValue()
+        subway_selected = self.subway_cb.GetValue()
+        trolleybus_selected = self.trolleybus_cb.GetValue()
 
         # Get the state of the radio boxes
         minimize_stations = self.stations_rb.GetValue()
-        minimize_transbords = self.transbords_rb.GetValue()        
+        minimize_transfers = self.transfers_rb.GetValue()        
         minimize_cost = self.costs_rb.GetValue()
 
         # Get the origin selected - if no origin selected -> error
         selected = self.choice_origin.GetCurrentSelection()
         if selected == -1:
-            return self.error("Cap origen seleccionat.")
+            return self.error("No origin selected.")
         origin = self.list_origin[selected]
         origin_id = self.stationStringToId(origin)
 
         # Get the destiny selected - if no destination is selected -> error
         selected = self.choice_destiny.GetCurrentSelection()
         if selected == -1:
-            return self.error("Cap destí seleccionat.")
+            return self.error("No destiny selected.")
         destiny = self.list_destiny[selected]
         destiny_id = self.stationStringToId(destiny)
 
         #### Use the logic obtained to run the algorithm
         ## Error checking
         # Check if the user selected at least one of the check boxes
-        if not (walking_selected or metro_selected or troleibus_selected):
-            return self.error("Cap mitja de transport seleccionat.")
+        if not (walking_selected or subway_selected or trolleybus_selected):
+            return self.error("Please select some vehicle.")
 
-        # If we selected troleibus, check for a valid destiny and origin
-        if troleibus_selected and not metro_selected and not walking_selected:
-            troleibus_ids = self.getTroleibusIdList()
+        # If we selected trolleybus, check for a valid destiny and origin
+        if trolleybus_selected and not subway_selected and not walking_selected:
+            trolleybus_ids = self.gettrolleybusIdList()
             found = False
             for id in origin_id:
-                if id in troleibus_ids:
+                if id in trolleybus_ids:
                     found = True
             if not found:
-                return self.error("Aquest origen no es possible quan viatgem en troleibus.")
+                return self.error("This origin isn't possible when we use trolleybus.")
             found = False
             for id in destiny_id:
-                if id in troleibus_ids:
+                if id in trolleybus_ids:
                     found = True
             if not found:
-                return self.error("Aquest destí no es possible quan viatgem en troleibus.")
+                return self.error("Unreachable destiny via trolleybus.")
 
         # Check if the user selected the same origin and destiny
         if origin_id == destiny_id:
-            return self.output_text.ChangeValue("Ja hi ets ¬¬.")
+            return self.output_text.ChangeValue("You are already there.")
         ## /Error checking
 
         ## Use selected options to manage the data to run the algorithm
@@ -192,7 +189,7 @@ class GuiAstar(wx.Frame): #frame es class dintre de wx que usarem en casi totes 
         train_info = train_parser.info
         distances = train_parser.distances
 
-        # Load the information of the troleibus (distances are the same as the train)
+        # Load the information of the trolleybus (distances are the same as the train)
         bus_parser = CityInfoParser()
         bus_parser.loadFile(TROLEI_BUS_INFO_PATH)
         bus_parser.parse()
@@ -205,7 +202,7 @@ class GuiAstar(wx.Frame): #frame es class dintre de wx que usarem en casi totes 
         train_costs = matrix_parser.values
         matrix_parser.closeFile()
 
-        # Load info of the troleibus costs
+        # Load info of the trolleybus costs
         matrix_parser.loadFile(TROLEI_BUS_MA_PATH)
         matrix_parser.parse()
         bus_costs = matrix_parser.values
@@ -215,28 +212,28 @@ class GuiAstar(wx.Frame): #frame es class dintre de wx que usarem en casi totes 
         # in some cases.
         costs_manager = CostsManager()
 
-        if metro_selected and troleibus_selected:
+        if subway_selected and trolleybus_selected:
             costs = costs_manager.combineCosts(train_info, bus_info, train_costs, bus_costs)
-        elif metro_selected:
+        elif subway_selected:
             costs = train_costs
-        elif walking_selected and not metro_selected and not troleibus_selected:
+        elif walking_selected and not subway_selected and not trolleybus_selected:
             costs = self.makeWalkingMatrix(distances)
-        elif walking_selected and troleibus_selected:
+        elif walking_selected and trolleybus_selected:
             costs = self.expandBusMatrix()
         else:
             costs = bus_costs
 
-        if walking_selected and (metro_selected or troleibus_selected):
+        if walking_selected and (subway_selected or trolleybus_selected):
             costs = costs_manager.setWalkingCostsWithDistances(
                                                costs,
                                                distances,
                                                multiplier = WALK_MULTIPLIER
                                           )
 
-        if minimize_transbords:
-            if metro_selected:
+        if minimize_transfers:
+            if subway_selected:
                 costs_manager.setTransferCost(train_parser.info, costs, 999)
-            elif troleibus_selected:
+            elif trolleybus_selected:
                 costs_manager.setTransferCost(bus_parser.info, costs, 999)
 
 
@@ -248,7 +245,7 @@ class GuiAstar(wx.Frame): #frame es class dintre de wx que usarem en casi totes 
 
         # Run the algorithm
         # If we only selected walking option, let the user go directly to their destination
-        if walking_selected and not troleibus_selected and not metro_selected:
+        if walking_selected and not trolleybus_selected and not subway_selected:
             result = [destiny_id[0] - 1, origin_id[0] - 1] # substract -1 to normalize, enumeration starts with n=1
         # Select the optimum way in case we have stations with same name (multiple IDs station)
         elif minimize_stations:
@@ -280,7 +277,7 @@ class GuiAstar(wx.Frame): #frame es class dintre de wx que usarem en casi totes 
             """
             Helper function.
             Returns 1, 2 or 3 depending on whether the optimum way of going from
-            id1 to id2 is by train (metro), bus or walking.
+            id1 to id2 is by train (subway), bus or walking.
             @id1 (int): station_id1
             @id2 (int): station_id2
             """
@@ -290,10 +287,9 @@ class GuiAstar(wx.Frame): #frame es class dintre de wx que usarem en casi totes 
                 id1,id2=id2,id1            
             if walking_selected:
                 costCaminant = walking_costs[id1-1][id2-1]
-                print "cost caminant", costCaminant
-            if troleibus_selected:
+            if trolleybus_selected:
                 ola=False
-                busList = self.getTroleibusIdList()
+                busList = self.gettrolleybusIdList()
                 if id2==18:
                     ola=True
                     id2,id1=id1,38
@@ -312,10 +308,9 @@ class GuiAstar(wx.Frame): #frame es class dintre de wx que usarem en casi totes 
                     if n2>n:
                         n2,n = n,n2
                     costBus = bus_costs[n][n2]
-                    print "cost bus: ", costBus
                 if ola:
                     id1,id2=id2,18
-            if metro_selected:
+            if subway_selected:
                 if id1==38:
                     xx,yy=17,id2-1
                     if xx<yy:
@@ -324,48 +319,44 @@ class GuiAstar(wx.Frame): #frame es class dintre de wx que usarem en casi totes 
                         id1=18
                 if id1<id2:
                     id2,id1=id1,id2
-                costMetro = train_costs[id1-1][id2-1]
-                print "costmetro: ", costMetro, id1, id2 , "|||", train_costs[37][1]
-            # print("potato: ", patata)
-            # print id1, " ", id1 in busList, " ", id2, " ", id2 in busList
-            # print busList
-            if metro_selected and not troleibus_selected and not walking_selected:
+                costsubway = train_costs[id1-1][id2-1]
+            if subway_selected and not trolleybus_selected and not walking_selected:
                 #100
                 return 1
-            elif not metro_selected and troleibus_selected and not walking_selected:
+            elif not subway_selected and trolleybus_selected and not walking_selected:
                 #010
                 return 2
-            elif not metro_selected and not troleibus_selected and walking_selected:
+            elif not subway_selected and not trolleybus_selected and walking_selected:
                 #001
                 return 3
-            elif metro_selected and not troleibus_selected and walking_selected:
+            elif subway_selected and not trolleybus_selected and walking_selected:
                 #101
-                if costMetro==0:
+                if costsubway==0:
                     return 3
-                x = min(costMetro,costCaminant)
-                if x==costMetro:
+                x = min(costsubway,costCaminant)
+                if x==costsubway:
                     return 1
                 elif x==costCaminant:
                     return 3
                 else:
                     raise ValueError()
-            elif metro_selected and troleibus_selected and not walking_selected and patata:
+            elif subway_selected and trolleybus_selected and not walking_selected and patata:
                 #110
-                if costMetro==0:
+                if costsubway==0:
                     return 2
                 elif costBus==0:
                     return 1
                 else:
-                    x = min(costMetro,costBus)
-                    if x==costMetro:
+                    x = min(costsubway,costBus)
+                    if x==costsubway:
                         return 1
                     elif x==costBus:
                         return 2
                     else:
                         raise ValueError()
-            elif metro_selected and troleibus_selected and not walking_selected and not patata:
+            elif subway_selected and trolleybus_selected and not walking_selected and not patata:
                 return 1
-            elif not metro_selected and troleibus_selected and walking_selected and patata:
+            elif not subway_selected and trolleybus_selected and walking_selected and patata:
                 #011
                 if costBus==0:
                     return 3
@@ -376,13 +367,13 @@ class GuiAstar(wx.Frame): #frame es class dintre de wx que usarem en casi totes 
                     return 3
                 else:
                     raise ValueError()
-            elif not metro_selected and troleibus_selected and walking_selected and not patata:
+            elif not subway_selected and trolleybus_selected and walking_selected and not patata:
                 return 3
-            elif metro_selected and troleibus_selected and walking_selected and patata:
+            elif subway_selected and trolleybus_selected and walking_selected and patata:
                 #111
-                if costMetro==0 and costBus==0:
+                if costsubway==0 and costBus==0:
                     return 3
-                elif costMetro==0:
+                elif costsubway==0:
                     x = min(costBus,costCaminant)
                     if x==costBus:
                         return 2
@@ -391,16 +382,16 @@ class GuiAstar(wx.Frame): #frame es class dintre de wx que usarem en casi totes 
                     else:
                         raise ValueError()
                 elif costBus==0:
-                    x = min(costMetro,costCaminant)
-                    if x==costMetro:
+                    x = min(costsubway,costCaminant)
+                    if x==costsubway:
                         return 1
                     elif x==costCaminant:
                         return 3
                     else:
                         raise ValueError()
                 else:
-                    x = min(costMetro,costCaminant,costBus)
-                    if x==costMetro:
+                    x = min(costsubway,costCaminant,costBus)
+                    if x==costsubway:
                         return 1
                     elif x==costCaminant:
                         return 3
@@ -408,13 +399,11 @@ class GuiAstar(wx.Frame): #frame es class dintre de wx que usarem en casi totes 
                         return 2
                     else:
                         raise ValueError()
-            elif metro_selected and troleibus_selected and walking_selected and not patata:
-                if costMetro==0:
-                    print("Hola mundo")
+            elif subway_selected and trolleybus_selected and walking_selected and not patata:
+                if costsubway==0:
                     return 3
-                x = min(costMetro,costCaminant)
-                # print costMetro
-                if x==costMetro:
+                x = min(costsubway,costCaminant)
+                if x==costsubway:
                     return 1
                 elif x==costCaminant:
                     return 3
@@ -424,11 +413,6 @@ class GuiAstar(wx.Frame): #frame es class dintre de wx que usarem en casi totes 
                 raise ValueError()
         result.reverse()
 
-        # for station_id in result:
-        #     station_text = self.stationIdToString(station_id + 1)
-        #     self.output_text.AppendText(station_text)
-        #     self.output_text.AppendText(", ")
-
         ###### Parse 2 per arreglar error
         matrix_parser = AdjacencyMatrixParser()
         matrix_parser.loadFile(MA_PATH)
@@ -436,7 +420,7 @@ class GuiAstar(wx.Frame): #frame es class dintre de wx que usarem en casi totes 
         train_costs = matrix_parser.values
         matrix_parser.closeFile()
 
-        print "result",result
+        print "result", result
         result = map(lambda num: num+1, result) # Increment each result by one
         print "result",result
         station_id1=result[0]       
@@ -451,16 +435,16 @@ class GuiAstar(wx.Frame): #frame es class dintre de wx que usarem en casi totes 
             
             self.output_text.AppendText(str(n) + ") " + origen_station + " -> " + destiny_station +": ")            
             if number == 1:
-                self.output_text.AppendText("Tren")
+                self.output_text.AppendText("Subway")
             elif number == 2:
-                self.output_text.AppendText("Troleibus")
+                self.output_text.AppendText("Trolleybus")
             elif number == 3:
-                self.output_text.AppendText("Caminant")
+                self.output_text.AppendText("Walking")
             else:
                 raise ValueError()
 
             if origen_station == destiny_station:
-                self.output_text.AppendText(" (transbord)")
+                self.output_text.AppendText(" (transfer)")
             self.output_text.AppendText("\n")
 
         # Move selection of text ctrl to topleft    
@@ -522,9 +506,9 @@ class GuiAstar(wx.Frame): #frame es class dintre de wx que usarem en casi totes 
                 obj = obj.title()
                 return obj
 
-    def getTroleibusIdList(self):
+    def gettrolleybusIdList(self):
         """
-        Returns a list with every ID avaiable when travelling by Troleibus
+        Returns a list with every ID avaiable when travelling by trolleybus
         """
         list=[]
         parsedInfo=CityInfoParser()
@@ -561,13 +545,13 @@ class GuiAstar(wx.Frame): #frame es class dintre de wx que usarem en casi totes 
                 sub_list.append(0)
             zero_list.append(sub_list)
 
-        # Load info of the troleibus costs
+        # Load info of the trolleybus costs
         matrix_parser.loadFile(TROLEI_BUS_MA_PATH)
         matrix_parser.parse()
         bus_costs = matrix_parser.values
         matrix_parser.closeFile()
 
-        # Load the information of the troleibus
+        # Load the information of the trolleybus
         bus_parser = CityInfoParser()
         bus_parser.loadFile(TROLEI_BUS_INFO_PATH)
         bus_parser.parse()

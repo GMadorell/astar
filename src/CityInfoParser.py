@@ -25,7 +25,6 @@ class CityInfoParser(BaseParser.BaseParser):
         assert self.file is not None
         self.info = {}
         for text_line in self.file.readlines():
-            # print(text_line)
             # Split text in tabulations
             splitted = text_line.split('\t')
             # The last part is special, we must check for negative numbers and
@@ -39,7 +38,6 @@ class CityInfoParser(BaseParser.BaseParser):
             splitted[-1] = number
 
             # Put the parsed info into the dict
-            # print(splitted)
             station_id = int(splitted.pop(0))
             name = splitted.pop(0)
             station_type = splitted.pop(0)

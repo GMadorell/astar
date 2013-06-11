@@ -8,35 +8,21 @@ import sys
 import pprint
 import copy
 
-CITY_INFO_PATH = 'MetroLyon.txt'
-MA_PATH = 'MatriuAdjacencia.txt'
+CITY_INFO_PATH = './data/MetroLyon.txt'
+MA_PATH = './data/MatriuAdjacencia.txt'
 
-TROLEI_BUS_MA_PATH = 'TroleiBusMA.txt'
-TROLEI_BUS_INFO_PATH = 'TroleiBusTest.txt'
+TROLEI_BUS_MA_PATH = './data/TroleiBusMA.txt'
+TROLEI_BUS_INFO_PATH = './data/TroleiBusTest.txt'
 
 WALK_MULTIPLIER = 6
 
 def main():
     """
-    - Camí de menor temps de trajecte: costs = matrix_parser.values, distances = info_parser.distances
-    - Transbords:
-        - Camí de menor nombre de transbords: done (falta ficar busos + trens junts) -> utilitzar funcio CostsManager.setTransferCost
-        - Camí de menor distància a recòrrer: costs = cost_manager, distances = info_parser.distances
-        - Camí de menor nombre de parades a realitzar: BFS
-    - Considerar més d'un mitjà de transport: done
-        - Bici?
-        - Bus?
-
-    - GUI: TODO
-       - 3 checkbuttons: 1 per caminant, 1 per bus, 1 per tren
-                         poden ser combinats 
-       - Fer imatge amb les linies existents
-
-    - Presentació:
-        - Parides a dir:
-            - Què passa si volem anar a l'ultima des de la primera fent el menor nombre de
-              parades? (ficar poder anar a peu).
+    Method used for testing the performance and the correctness of the implemented
+    A* and BFS algorithms along with the parsers.
+    Comment / Uncomment code to test different features of the software.
     """
+
     # Load the information of the city
     train_parser = CityInfoParser()
     train_parser.loadFile(CITY_INFO_PATH)
@@ -110,7 +96,7 @@ def main():
     # Run the algorithm
     # way = search.aStar(1, 24, start_at=1)
     way = search.BFS(1, 24, start_at=1)
-    print('Result:', way)
+    print 'Result:', way
 
 if __name__ == '__main__':
     main()
